@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EDS Block Generator — Separated Files</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Correct: UMD global version -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.7.0/docx.umd.js"></script>
+
+  <!-- These are fine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+
+<body>
+  <main class="wrap">
+    <header>
+      <h1>EDS Block Generator — Frontend (separated files)</h1>
+      <p class="muted">Generates a ZIP containing a self-contained block: <code>index.html</code>, <code>style.css</code>, <code>script.js</code>. No backend required.</p>
+    </header>
+
+    <section class="grid">
+      <section class="card left">
+        <label>Block name</label>
+        <input id="blockName" value="hero-banner" placeholder="hero-banner">
+
+        <label>Dynamic table (editable)</label>
+        <div id="tableEditor" class="table-editor"></div>
+        <div class="controls-row">
+          <button id="addRow">+ Row</button>
+          <button id="addCol">+ Col</button>
+          <button id="remRow">- Row</button>
+          <button id="remCol">- Col</button>
+          <button id="loadExample" class="ghost">Load Example</button>
+        </div>
+
+        <label>Full site CSS (paste)</label>
+        <textarea id="fullCss" placeholder="Paste full site CSS here"></textarea>
+
+        <label>Block HTML DOM (paste)</label>
+        <textarea id="blockHtml" placeholder="Paste block HTML here"></textarea>
+
+        <div class="controls-row">
+          <button id="downloadDocxBtn">Download document</button>
+
+          <button id="downloadCss" class="ghost">Download your block CSS and JS</button>
+          <button id="previewBtn" class="ghost">Refresh Preview</button>
+
+        </div>
+
+        <div id="status" class="status"></div>
+      </section>
+
+      <aside class="card right">
+        <label>Preview</label>
+        <div id="previewContainer" class="preview"></div>
+
+        <label>Generated JS (preview)</label>
+        <pre id="generatedJsPreview" class="codePreview"></pre>
+
+        <label>Generated CSS (preview)</label>
+        <pre id="generatedCssPreview" class="codePreview"></pre>
+      </aside>
+    </section>
+
+    <footer class="note">
+      Developer note: Extraction uses a hidden iframe + CSSOM to match selectors to the pasted DOM (handles @media, @keyframes, @font-face heuristics).
+    </footer>
+  </main>
+
+
+  <script src="script.js"></script>
+</body>
+</html>
