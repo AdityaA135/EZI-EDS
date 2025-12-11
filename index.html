@@ -3,74 +3,533 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>EDS Block Generator — Separated Files</title>
-  <link rel="stylesheet" href="style.css">
-
-  <!-- Correct: UMD global version -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.7.0/docx.umd.js"></script>
-
-  <!-- These are fine -->
+  <title>EDS Block Generator — Enhanced</title>
+  <style>
+    :root {
+      --bg: #f7f9fb;
+      --card: #ffffff;
+      --muted: #6b7280;
+      --accent: #6d28d9;
+      --border: #e6e9ee;
+      --code-bg: #fbfcfe;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
+      background: var(--bg);
+      color: #0b1220;
+    }
+    .wrap { max-width: 1200px; margin: 28px auto; padding: 18px; }
+    header h1 { margin: 0; font-size: 18px; }
+    header .muted { margin: 6px 0 12px; color: var(--muted); font-size: 13px; }
+    .grid { display: grid; grid-template-columns: 1fr 420px; gap: 16px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+    }
+    .left label, .right label { font-weight: 600; display: block; margin-top: 8px; }
+    input[type=text], textarea {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-top: 6px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .table-editor {
+      margin-top: 8px;
+      border-radius: 8px;
+      background: var(--code-bg);
+      padding: 8px;
+      border: 1px solid var(--border);
+      overflow: auto;
+    }
+    .table-editor table { width: 100%; border-collapse: collapse; }
+    .table-editor td {
+      border: 1px solid var(--border);
+      padding: 8px;
+      vertical-align: top;
+      min-width: 150px;
+    }
+    .table-editor .cell-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .table-editor .var-label {
+      font-size: 10px;
+      color: var(--accent);
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .table-editor input {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .table-editor .varname-input {
+      font-family: monospace;
+      background: #f0f0f0;
+      border-color: var(--accent);
+    }
+    .controls-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+    button {
+      background: var(--accent);
+      color: #fff;
+      padding: 8px 12px;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    button.ghost {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+    button:hover { opacity: 0.9; }
+    .preview {
+      height: 360px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      overflow: auto;
+      background: #fff;
+      padding: 8px;
+      margin-top: 6px;
+    }
+    .codePreview {
+      height: 120px;
+      overflow: auto;
+      background: var(--code-bg);
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .status { margin-top: 8px; color: var(--muted); font-size: 13px; }
+    .note { margin-top: 12px; color: var(--muted); font-size: 13px; }
+  </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
-
 <body>
-  <main class="wrap">
-    <header>
-      <h1>EDS Block Generator — Frontend (separated files)</h1>
-      <p class="muted">Generates a ZIP containing a self-contained block: <code>index.html</code>, <code>style.css</code>, <code>script.js</code>. No backend required.</p>
-    </header>
+<main class="wrap">
+  <header>
+    <h1>EDS Block Generator — Enhanced</h1>
+    <p class="muted">Every cell has a variable name + value. DOCX shows only values. JS uses variable names.</p>
+  </header>
 
-    <section class="grid">
-      <section class="card left">
-        <label>Block name</label>
-        <input id="blockName" value="hero-banner" placeholder="hero-banner">
+  <section class="grid">
+    <section class="card left">
+      <label>Block name</label>
+      <input id="blockName" value="hero-banner" placeholder="hero-banner">
 
-        <label>Dynamic table (editable)</label>
-        <div id="tableEditor" class="table-editor"></div>
-        <div class="controls-row">
-          <button id="addRow">+ Row</button>
-          <button id="addCol">+ Col</button>
-          <button id="remRow">- Row</button>
-          <button id="remCol">- Col</button>
-          <button id="loadExample" class="ghost">Load Example</button>
-        </div>
+      <label>Dynamic table (each cell = variable name + value)</label>
+      <div id="tableEditor" class="table-editor"></div>
+      <div class="controls-row">
+        <button id="addRow">+ Row</button>
+        <button id="addCol">+ Col</button>
+        <button id="remRow">- Row</button>
+        <button id="remCol">- Col</button>
+        <button id="loadExample" class="ghost">Load Example</button>
+      </div>
 
-        <label>Full site CSS (paste)</label>
-        <textarea id="fullCss" placeholder="Paste full site CSS here"></textarea>
+      <label>Full site CSS (paste)</label>
+      <textarea id="fullCss" rows="6" placeholder="Paste full site CSS here"></textarea>
 
-        <label>Block HTML DOM (paste)</label>
-        <textarea id="blockHtml" placeholder="Paste block HTML here"></textarea>
+      <label>Block HTML DOM (paste)</label>
+      <textarea id="blockHtml" rows="8" placeholder="Paste block HTML here (use variable names like {{title}}, {{caption}}, etc.)"></textarea>
 
-        <div class="controls-row">
-          <button id="downloadDocxBtn">Download document</button>
+      <div class="controls-row">
+        <button id="downloadDocxBtn">Download .docx</button>
+        <button id="downloadCssJsBtn" class="ghost">Download CSS & JS</button>
+        <button id="previewBtn" class="ghost">Refresh Preview</button>
+      </div>
 
-          <button id="downloadCss" class="ghost">Download your block CSS and JS</button>
-          <button id="previewBtn" class="ghost">Refresh Preview</button>
-
-        </div>
-
-        <div id="status" class="status"></div>
-      </section>
-
-      <aside class="card right">
-        <label>Preview</label>
-        <div id="previewContainer" class="preview"></div>
-
-        <label>Generated JS (preview)</label>
-        <pre id="generatedJsPreview" class="codePreview"></pre>
-
-        <label>Generated CSS (preview)</label>
-        <pre id="generatedCssPreview" class="codePreview"></pre>
-      </aside>
+      <div id="status" class="status"></div>
     </section>
 
-    <footer class="note">
-      Developer note: Extraction uses a hidden iframe + CSSOM to match selectors to the pasted DOM (handles @media, @keyframes, @font-face heuristics).
-    </footer>
-  </main>
+    <aside class="card right">
+      <label>Preview</label>
+      <div id="previewContainer" class="preview"></div>
 
+      <label>Generated JS (preview)</label>
+      <pre id="generatedJsPreview" class="codePreview"></pre>
 
-  <script src="script.js"></script>
+      <label>Generated CSS (preview)</label>
+      <pre id="generatedCssPreview" class="codePreview"></pre>
+    </aside>
+  </section>
+
+  <footer class="note">
+    Enhanced: Every cell has variable name + value. DOCX exports only values in table format.
+  </footer>
+</main>
+
+<script>
+  (function(){
+    // UI references
+    const tableEditor = document.getElementById('tableEditor');
+    const blockNameInp = document.getElementById('blockName');
+    const fullCssTA = document.getElementById('fullCss');
+    const blockHtmlTA = document.getElementById('blockHtml');
+    const previewContainer = document.getElementById('previewContainer');
+    const generatedJsPreview = document.getElementById('generatedJsPreview');
+    const generatedCssPreview = document.getElementById('generatedCssPreview');
+    const status = document.getElementById('status');
+
+    // Table structure: EVERY cell has { value, varName }
+    let tableData = [
+      [
+        { value: 'Title', varName: 'title' },
+        { value: 'Caption', varName: 'caption' },
+        { value: 'Image', varName: 'image' },
+        { value: 'Video', varName: 'video' }
+      ],
+      [
+        { value: 'Autumn Sale', varName: 'row2_title' },
+        { value: 'Up to 50% off', varName: 'row2_caption' },
+        { value: '/assets/sale.jpg', varName: 'row2_image' },
+        { value: 'https://youtu.be/dQw4w9WgXcQ', varName: 'row2_video' }
+      ]
+    ];
+
+    function renderTable() {
+      tableEditor.innerHTML = '';
+      const table = document.createElement('table');
+
+      tableData.forEach((row, r) => {
+        const tr = document.createElement('tr');
+        row.forEach((cell, c) => {
+          const td = document.createElement('td');
+          const wrapper = document.createElement('div');
+          wrapper.className = 'cell-wrapper';
+
+          // Variable name input (for EVERY cell)
+          const varLabel = document.createElement('div');
+          varLabel.className = 'var-label';
+          varLabel.textContent = 'Variable Name';
+          wrapper.appendChild(varLabel);
+
+          const varInput = document.createElement('input');
+          varInput.className = 'varname-input';
+          varInput.value = cell.varName || '';
+          varInput.placeholder = `var_r${r+1}_c${c+1}`;
+          varInput.addEventListener('input', e => {
+            tableData[r][c].varName = e.target.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+            updatePreviews();
+          });
+          wrapper.appendChild(varInput);
+
+          // Value input (for EVERY cell)
+          const valLabel = document.createElement('div');
+          valLabel.className = 'var-label';
+          valLabel.textContent = 'Value';
+          valLabel.style.marginTop = '8px';
+          wrapper.appendChild(valLabel);
+
+          const valueInput = document.createElement('input');
+          valueInput.value = cell.value || '';
+          valueInput.placeholder = 'Enter value';
+          valueInput.addEventListener('input', e => {
+            tableData[r][c].value = e.target.value;
+            updatePreviews();
+          });
+          wrapper.appendChild(valueInput);
+
+          td.appendChild(wrapper);
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+      });
+      tableEditor.appendChild(table);
+    }
+
+    document.getElementById('addRow').addEventListener('click', () => {
+      const cols = tableData[0].length;
+      const newRow = [];
+      for (let c = 0; c < cols; c++) {
+        newRow.push({ value: '', varName: `row${tableData.length + 1}_col${c + 1}` });
+      }
+      tableData.push(newRow);
+      renderTable();
+      updatePreviews();
+    });
+
+    document.getElementById('addCol').addEventListener('click', () => {
+      const colNum = tableData[0].length + 1;
+      tableData.forEach((r, rowIdx) => {
+        r.push({ value: '', varName: `row${rowIdx + 1}_col${colNum}` });
+      });
+      renderTable();
+      updatePreviews();
+    });
+
+    document.getElementById('remRow').addEventListener('click', () => {
+      if (tableData.length > 1) tableData.pop();
+      renderTable();
+      updatePreviews();
+    });
+
+    document.getElementById('remCol').addEventListener('click', () => {
+      if (tableData[0].length > 1) tableData.forEach(r => r.pop());
+      renderTable();
+      updatePreviews();
+    });
+
+    document.getElementById('loadExample').addEventListener('click', () => {
+      tableData = [
+        [
+          { value: 'Title', varName: 'title' },
+          { value: 'Caption', varName: 'caption' },
+          { value: 'Image', varName: 'image' },
+          { value: 'Video', varName: 'video' }
+        ],
+        [
+          { value: 'Autumn Sale', varName: 'row2_title' },
+          { value: 'Up to 50% off', varName: 'row2_caption' },
+          { value: '/assets/sale.jpg', varName: 'row2_image' },
+          { value: 'https://youtu.be/dQw4w9WgXcQ', varName: 'row2_video' }
+        ]
+      ];
+
+      blockHtmlTA.value = `<div data-block="hero-banner" class="hero">
+    <h1 class="title">{{row2_title}}</h1>
+    <p class="caption">{{row2_caption}}</p>
+    <img class="hero-img" src="{{row2_image}}" alt="">
+    <a class="cta" href="{{row2_video}}">Watch Video</a>
+  </div>`;
+
+      fullCssTA.value = `.hero{padding:24px;border-radius:8px;background:linear-gradient(90deg,#243B55,#141E30);color:white}
+  .hero .title{font-size:28px;margin:0}
+  .hero .caption{opacity:0.9}
+  .hero .hero-img{width:100%;height:auto;border-radius:6px;margin-top:8px}
+  .hero .cta{display:inline-block;margin-top:8px;padding:8px 12px;background:#ff7b7b;color:#012;border-radius:6px;text-decoration:none}`;
+
+      renderTable();
+      updatePreviews();
+    });
+
+    // CSS Extraction (iframe + CSSOM)
+    const workerIframe = document.createElement('iframe');
+    workerIframe.style.display = 'none';
+    workerIframe.sandbox = 'allow-same-origin';
+    document.body.appendChild(workerIframe);
+
+    function buildExtractedCSS(domHtml, cssText) {
+      const ifr = workerIframe;
+      const idoc = ifr.contentDocument || ifr.contentWindow.document;
+      idoc.open();
+      idoc.write('<!doctype html><html><head></head><body><div id="__extract-root">' + domHtml + '</div></body></html>');
+      idoc.close();
+
+      const styleEl = idoc.createElement('style');
+      styleEl.textContent = cssText;
+      idoc.head.appendChild(styleEl);
+
+      const sheet = styleEl.sheet;
+      if (!sheet) return '';
+
+      const usedRules = [];
+
+      function processRule(rule) {
+        try {
+          if (rule.type === 1) { // STYLE_RULE
+            const selector = rule.selectorText;
+            try {
+              if (idoc.querySelector(selector)) {
+                usedRules.push(rule.cssText);
+              }
+            } catch (e) {}
+          }
+        } catch (e) {}
+      }
+
+      try {
+        for (let i = 0; i < sheet.cssRules.length; i++) {
+          processRule(sheet.cssRules[i]);
+        }
+      } catch (e) {}
+
+      try { idoc.head.removeChild(styleEl); } catch (e) {}
+
+      return usedRules.join('\n\n');
+    }
+
+    function generateJS() {
+      const blockName = blockNameInp.value.trim() || 'block';
+      let blockHtml = blockHtmlTA.value;
+
+      // Build variable declarations for ALL cells
+      let varDeclarations = '';
+      const varMap = new Map(); // Track which variables are used
+
+      tableData.forEach((row, r) => {
+        row.forEach((cell, c) => {
+          const varName = cell.varName || `var_r${r+1}_c${c+1}`;
+          if (!varMap.has(varName)) {
+            varMap.set(varName, { row: r, col: c });
+            varDeclarations += `  const ${varName} = (function(){
+      const tbl = block.querySelector("table");
+      if(!tbl) return "";
+      const rows = tbl.rows || [];
+      const cellObj = (rows[${r}] && rows[${r}].cells && rows[${r}].cells[${c}])
+        ? rows[${r}].cells[${c}]
+        : null;
+      return cellObj ? cellObj.textContent.trim() : "";
+    })();
+  `;
+          }
+        });
+      });
+
+      // Replace template variables in HTML
+      tableData.forEach((row) => {
+        row.forEach((cell) => {
+          const varName = cell.varName || '';
+          if (varName) {
+            blockHtml = blockHtml.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), `\${${varName}}`);
+          }
+        });
+      });
+
+      return `export default async function decorate(block) {
+  ${varDeclarations}
+    // Clear old authored HTML
+    block.innerHTML = "";
+
+    // Inject the generated HTML
+    block.innerHTML = \`${blockHtml.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
+  }
+  `;
+    }
+
+    function updatePreviews() {
+      const blockHtml = blockHtmlTA.value || '';
+      const fullCss = fullCssTA.value || '';
+
+      let previewHtml = blockHtml;
+      // Replace template variables with actual values for preview
+      tableData.forEach((row) => {
+        row.forEach((cell) => {
+          const varName = cell.varName || '';
+          if (varName && cell.value) {
+            previewHtml = previewHtml.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), cell.value);
+          }
+        });
+      });
+
+      const extracted = buildExtractedCSS(previewHtml, fullCss);
+      generatedCssPreview.textContent = extracted || '/* No matched rules */';
+      generatedJsPreview.textContent = generateJS();
+
+      const blob = new Blob([
+        '<!doctype html><html><head><meta charset="utf-8"><style>' + extracted + '</style></head><body>' + previewHtml + '</body></html>'
+      ], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      previewContainer.innerHTML = `<iframe src="${url}" style="width:100%;height:100%;border:0"></iframe>`;
+    }
+
+    // Download DOCX (Google Docs compatible) - ONLY VALUES, NO VARIABLE NAMES
+    document.getElementById('downloadDocxBtn').addEventListener('click', async () => {
+      const blockName = blockNameInp.value.trim() || 'block';
+
+      status.textContent = 'Generating DOCX...';
+
+      // Build table with ONLY values (ignore variable names)
+      const rows = tableData.map(row => row.map(cell => cell.value));
+
+      const tableRows = rows.map(row => {
+        const cells = row.map(cellText => {
+          const escaped = String(cellText).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return `<w:tc><w:tcPr><w:tcW w:w="2500" w:type="dxa"/></w:tcPr><w:p><w:r><w:t>${escaped}</w:t></w:r></w:p></w:tc>`;
+        }).join('');
+        return `<w:tr>${cells}</w:tr>`;
+      }).join('');
+
+      const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+    <w:body>
+      <w:tbl>
+        <w:tblPr>
+          <w:tblW w:w="9500" w:type="dxa"/>
+          <w:tblBorders>
+            <w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+            <w:left w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+            <w:bottom w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+            <w:right w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+            <w:insideH w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+            <w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+          </w:tblBorders>
+        </w:tblPr>
+        ${tableRows}
+      </w:tbl>
+      <w:sectPr><w:pgSz w:w="12240" w:h="15840"/></w:sectPr>
+    </w:body>
+  </w:document>`;
+
+      const zip = new JSZip();
+
+      zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+    <Default Extension="xml" ContentType="application/xml"/>
+    <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  </Types>`);
+
+      zip.folder('_rels').file('.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+  </Relationships>`);
+
+      zip.folder('word').file('document.xml', documentXml);
+
+      zip.folder('word').folder('_rels').file('document.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <Relationships xmlns="http://schemas.openxmlformats.org/officeDocument/2006/relationships"></Relationships>`);
+
+      const content = await zip.generateAsync({ type: 'blob' });
+      saveAs(content, `${blockName}.docx`);
+      status.textContent = `Downloaded ${blockName}.docx (only values, no variable names)`;
+    });
+
+    // Download CSS & JS
+    document.getElementById('downloadCssJsBtn').addEventListener('click', async () => {
+      const blockName = blockNameInp.value.trim() || 'block';
+      const blockHtml = blockHtmlTA.value || '';
+      const fullCss = fullCssTA.value || '';
+
+      status.textContent = 'Generating files...';
+
+      const extracted = buildExtractedCSS(blockHtml, fullCss);
+      const generatedJs = generateJS();
+
+      const zip = new JSZip();
+      const folder = zip.folder(blockName);
+      folder.file(`${blockName}.css`, extracted);
+      folder.file(`${blockName}.js`, generatedJs);
+
+      const content = await zip.generateAsync({ type: 'blob' });
+      saveAs(content, `${blockName}-block.zip`);
+      status.textContent = `Downloaded ${blockName}-block.zip`;
+    });
+
+    document.getElementById('previewBtn').addEventListener('click', () => {
+      updatePreviews();
+      status.textContent = 'Preview refreshed';
+    });
+
+    renderTable();
+    updatePreviews();
+  })();
+</script>
 </body>
 </html>
