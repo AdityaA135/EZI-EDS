@@ -118,8 +118,8 @@
     .status { margin-top: 8px; color: var(--muted); font-size: 13px; }
     .note { margin-top: 12px; color: var(--muted); font-size: 13px; }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="jszip.min.js"></script>
+  <script src="FileSaver.min.js"></script>
 </head>
 <body>
 <main class="wrap">
@@ -152,7 +152,7 @@
       <div class="controls-row">
         <button id="downloadDocxBtn">Download .docx</button>
         <button id="downloadCssJsBtn" class="ghost">Download CSS & JS</button>
-        <button id="previewBtn" class="ghost">Refresh Preview</button>
+        <button id="previewBtn" class="ghost">Generate Code</button>
       </div>
 
       <div id="status" class="status"></div>
@@ -162,11 +162,22 @@
       <label>Preview</label>
       <div id="previewContainer" class="preview"></div>
 
+
+
       <label>Generated JS (preview)</label>
       <pre id="generatedJsPreview" class="codePreview"></pre>
 
+      <button id="copyBtnJs">Copy JS</button>
+
+      <span id="copyStatusJs" style="margin-left: 8px;"></span>
+
       <label>Generated CSS (preview)</label>
       <pre id="generatedCssPreview" class="codePreview"></pre>
+
+      <button id="copyBtnCSS">Copy CSS</button>
+
+      <span id="copyStatusCSS" style="margin-left: 8px;"></span>
+
     </aside>
   </section>
 
@@ -378,15 +389,7 @@
           const varName = cell.varName || `var_r${r+1}_c${c+1}`;
           if (!varMap.has(varName)) {
             varMap.set(varName, { row: r, col: c });
-            varDeclarations += `  const ${varName} = (function(){
-      const tbl = block.querySelector("table");
-      if(!tbl) return "";
-      const rows = tbl.rows || [];
-      const cellObj = (rows[${r}] && rows[${r}].cells && rows[${r}].cells[${c}])
-        ? rows[${r}].cells[${c}]
-        : null;
-      return cellObj ? cellObj.textContent.trim() : "";
-    })();
+            varDeclarations += ` const ${varName} = rows?.[${r}]?.children?.[${c}]?.textContent?.trim() || "";
   `;
           }
         });
@@ -403,12 +406,15 @@
       });
 
       return `export default async function decorate(block) {
-  ${varDeclarations}
-    // Clear old authored HTML
-    block.innerHTML = "";
+      const rows = [...block.children];
+      ${varDeclarations}
 
-    // Inject the generated HTML
-    block.innerHTML = \`${blockHtml.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
+
+      // Clear old authored HTML
+      block.innerHTML = "";
+
+      // Inject the generated HTML
+      block.innerHTML = \`${blockHtml.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
   }
   `;
     }
@@ -448,6 +454,19 @@
       // Build table with ONLY values (ignore variable names)
       const rows = tableData.map(row => row.map(cell => cell.value));
 
+      // Header row: full width, showing block name
+      const headerRow = `
+      <w:tr>
+        <w:tc>
+          <w:tcPr>
+            <w:gridSpan w:val="${cols}"/>
+            <w:tcW w:w="9500" w:type="dxa"/>
+          </w:tcPr>
+          <w:p><w:r><w:t>${blockName}</w:t></w:r></w:p>
+        </w:tc>
+      </w:tr>`;
+
+
       const tableRows = rows.map(row => {
         const cells = row.map(cellText => {
           const escaped = String(cellText).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -471,6 +490,7 @@
             <w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/>
           </w:tblBorders>
         </w:tblPr>
+        ${headerRow}
         ${tableRows}
       </w:tbl>
       <w:sectPr><w:pgSz w:w="12240" w:h="15840"/></w:sectPr>
@@ -530,6 +550,36 @@
     renderTable();
     updatePreviews();
   })();
+
+const copyBtnJs = document.getElementById("copyBtnJs");
+const copyBtnCSS = document.getElementById("copyBtnCSS");
+
+const jsPreview = document.getElementById("generatedJsPreview");
+const cssPreview = document.getElementById("generatedCssPreview");
+
+const statusJs = document.getElementById("copyStatusJs");
+const statusCSS = document.getElementById("copyStatusCSS");
+
+copyBtnJs.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(jsPreview.textContent);
+    statusJs.textContent = "JS Copied!";
+    setTimeout(() => statusJs.textContent = "", 1500);
+  } catch (err) {
+    statusJs.textContent = "Copy failed";
+  }
+});
+
+copyBtnCSS.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(cssPreview.textContent);
+    statusCSS.textContent = "CSS Copied!";
+    setTimeout(() => statusCSS.textContent = "", 1500);
+  } catch (err) {
+    statusCSS.textContent = "Copy failed";
+  }
+});
+
 </script>
 </body>
 </html>
