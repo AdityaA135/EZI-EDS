@@ -340,7 +340,7 @@ ${fetchLines}
     const blockHtml = blockHtmlTA.value || '';
     const fullCss = fullCssTA.value || '';
     const extracted = buildExtractedCSS(blockHtml, fullCss);
-    const blob = new Blob([extracted], {type:'text/css'});
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
     saveAs(blob, `${sanitizeName(blockNameInp.value||'block')}.css`);
   }
 
