@@ -5,6 +5,29 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>EDS Block Generator — Enhanced</title>
   <style>
+
+    /*Experimental CSS*/
+    .exp-ribbon {
+      position: fixed;
+      top: 18px;
+      left: -48px;
+      z-index: 9999;
+
+      background: #d32f2f;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 60px;
+
+      transform: rotate(-45deg);
+      text-align: center;
+      letter-spacing: 0.4px;
+
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      pointer-events: none; /* does not block clicks */
+    }
+    //experimental css ends
+
     :root {
       --bg: #f7f9fb;
       --card: #ffffff;
@@ -127,6 +150,7 @@
     <h1>EDS Block Generator — Enhanced</h1>
     <p class="muted">Every cell has a variable name + value. DOCX shows only values. JS uses variable names.</p>
   </header>
+  <div class="exp-ribbon">Experimental Phase</div>
 
   <section class="grid">
     <section class="card left">
@@ -384,13 +408,29 @@
       let varDeclarations = '';
       const varMap = new Map(); // Track which variables are used
 
-      tableData.forEach((row, r) => {
-        row.forEach((cell, c) => {
+           tableData.forEach((row, r) => {
+          row.forEach((cell, c) => {
           const varName = cell.varName || `var_r${r+1}_c${c+1}`;
-          if (!varMap.has(varName)) {
-            varMap.set(varName, { row: r, col: c });
-            varDeclarations += ` const ${varName} = rows?.[${r}]?.children?.[${c}]?.textContent?.trim() || "";
-  `;
+          if (varMap.has(varName)) return;
+
+          varMap.set(varName, { row: r, col: c });
+
+          const cellValue = (cell.value || '').trim().toLowerCase();
+
+          if (cellValue === 'img') {
+            varDeclarations += `
+        const ${varName} =
+          rows?.[${r}]?.children?.[${c}]?querySelector('picture img') ||
+          rows?.[${r}]?.children?.[${c}]?.querySelector('img');
+
+        const ${varName}_SRC = ${varName}?.getAttribute('src') || "";
+        const ${varName}_ALT = ${varName}?.getAttribute('alt') || "";
+      `;
+          } else {
+            varDeclarations += `
+        const ${varName} =
+          rows?.[${r}]?.children?.[${c}]?.textContent?.trim() || "";
+      `;
           }
         });
       });
@@ -551,34 +591,34 @@
     updatePreviews();
   })();
 
-const copyBtnJs = document.getElementById("copyBtnJs");
-const copyBtnCSS = document.getElementById("copyBtnCSS");
+  const copyBtnJs = document.getElementById("copyBtnJs");
+  const copyBtnCSS = document.getElementById("copyBtnCSS");
 
-const jsPreview = document.getElementById("generatedJsPreview");
-const cssPreview = document.getElementById("generatedCssPreview");
+  const jsPreview = document.getElementById("generatedJsPreview");
+  const cssPreview = document.getElementById("generatedCssPreview");
 
-const statusJs = document.getElementById("copyStatusJs");
-const statusCSS = document.getElementById("copyStatusCSS");
+  const statusJs = document.getElementById("copyStatusJs");
+  const statusCSS = document.getElementById("copyStatusCSS");
 
-copyBtnJs.addEventListener("click", async () => {
-  try {
-    await navigator.clipboard.writeText(jsPreview.textContent);
-    statusJs.textContent = "JS Copied!";
-    setTimeout(() => statusJs.textContent = "", 1500);
-  } catch (err) {
-    statusJs.textContent = "Copy failed";
-  }
-});
+  copyBtnJs.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(jsPreview.textContent);
+      statusJs.textContent = "JS Copied!";
+      setTimeout(() => statusJs.textContent = "", 1500);
+    } catch (err) {
+      statusJs.textContent = "Copy failed";
+    }
+  });
 
-copyBtnCSS.addEventListener("click", async () => {
-  try {
-    await navigator.clipboard.writeText(cssPreview.textContent);
-    statusCSS.textContent = "CSS Copied!";
-    setTimeout(() => statusCSS.textContent = "", 1500);
-  } catch (err) {
-    statusCSS.textContent = "Copy failed";
-  }
-});
+  copyBtnCSS.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(cssPreview.textContent);
+      statusCSS.textContent = "CSS Copied!";
+      setTimeout(() => statusCSS.textContent = "", 1500);
+    } catch (err) {
+      statusCSS.textContent = "Copy failed";
+    }
+  });
 
 </script>
 </body>
