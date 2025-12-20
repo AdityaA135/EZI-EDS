@@ -9,8 +9,8 @@
     /*Experimental CSS*/
     .exp-ribbon {
       position: fixed;
-      top: 18px;
-      left: -48px;
+      top: 40px;
+      left: -60px;
       z-index: 9999;
 
       background: #d32f2f;
@@ -26,8 +26,71 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.25);
       pointer-events: none; /* does not block clicks */
     }
-    //experimental css ends
 
+    /*POP UP CSS*/
+    .howto-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.howto-modal {
+  background: #fff;
+  max-width: 420px;
+  width: 90%;
+  padding: 22px;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  position: relative;
+}
+
+.howto-modal h2 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.howto-modal ul {
+  padding-left: 18px;
+}
+
+.howto-modal li {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.howto-close,
+.howto-close-btn {
+  cursor: pointer;
+}
+
+.howto-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 22px;
+  border: none;
+  background: none;
+}
+
+.howto-close-btn {
+  margin: 20px auto 0;
+  padding: 8px 22px;
+  border: none;
+  border-radius: 6px;
+  background: #1976d2;
+  color: #fff;
+  font-weight: 600;
+  display: block;
+}
+
+
+
+    /*Main css*/
     :root {
       --bg: #f7f9fb;
       --card: #ffffff;
@@ -147,7 +210,8 @@
 <body>
 <main class="wrap">
   <header>
-    <h1>EDS Block Generator — Enhanced</h1>
+    <h1 style="font-size:35px;">EZI EDS</h1>
+    <h1 >AEM EDS Block Generator — Enhanced</h1>
     <p class="muted">Every cell has a variable name + value. DOCX shows only values. JS uses variable names.</p>
   </header>
   <div class="exp-ribbon">Experimental Phase</div>
@@ -156,6 +220,27 @@
     <section class="card left">
       <label>Block name</label>
       <input id="blockName" value="hero-banner" placeholder="hero-banner">
+      <button class="howto-btn">How to use the tool?</button>
+
+      <div class="howto-overlay" style="display:none">
+        <div class="howto-modal">
+          <button class="howto-close">×</button>
+
+          <h2>How to use this tool</h2>
+
+          <ul>
+            <li>Step 1: Make your document in sharepoint/ google drive and author as you want</li>
+            <li>Step 2: Write in same manner variable names in tool table, same variable will be used in Js</li>
+            <li>Step 3: For text, give value "text", for image use "img", this will make Js as per need</li>
+            <li>Step 4: Give full CSS and specific DOM for the block</li>
+            <li>Step 5: Click "Generate Code", copy css and js</li>
+            <li>Step 6: Just replace hardcoded content in JS innerhtml to ${your_variable_name}</li>
+            <li>Step 7: Preview the doc, it should be working fine!!</li>
+          </ul>
+          <button class="howto-close-btn">Close</button>
+
+        </div>
+      </div>
 
       <label>Dynamic table (each cell = variable name + value)</label>
       <div id="tableEditor" class="table-editor"></div>
@@ -205,9 +290,7 @@
     </aside>
   </section>
 
-  <footer class="note">
-    Enhanced: Every cell has variable name + value. DOCX exports only values in table format.
-  </footer>
+
 </main>
 
 <script>
@@ -620,6 +703,38 @@
     }
   });
 
+  const howToBtn = document.querySelector(".howto-btn");
+  const overlay = document.querySelector(".howto-overlay");
+  const closeBtn = document.querySelector(".howto-close");
+  const closeBtnBottom = document.querySelector(".howto-close-btn");
+
+  howToBtn.addEventListener("click", () => {
+    overlay.style.display = "flex";
+  });
+
+  closeBtn.addEventListener("click", () => {
+    console.log("inside close");
+    overlay.style.display = "none";
+
+  });
+
+  closeBtnBottom.addEventListener("click", () => {
+  console.log("inside closebtn");
+    overlay.style.display = "none";
+
+  });
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      overlay.style.display = "none";
+
+    }
+  });
+
+
 </script>
+
+
+
 </body>
 </html>
