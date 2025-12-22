@@ -176,6 +176,9 @@
       cursor: pointer;
       font-size: 13px;
     }
+    .howto-btn{
+    float:right;
+    }
     button.ghost {
       background: transparent;
       color: var(--accent);
@@ -214,13 +217,13 @@
     <h1 >AEM EDS Block Generator — Enhanced</h1>
     <p class="muted">Every cell has a variable name + value. DOCX shows only values. JS uses variable names.</p>
   </header>
-  <div class="exp-ribbon">Experimental Phase</div>
+<!--  <div class="exp-ribbon">Experimental Phase</div>-->
 
   <section class="grid">
     <section class="card left">
       <label>Block name</label>
       <input id="blockName" value="hero-banner" placeholder="hero-banner">
-      <button class="howto-btn">How to use the tool?</button>
+      <button class="howto-btn">HOW TO USE THE TOOL?</button>
 
       <div class="howto-overlay" style="display:none">
         <div class="howto-modal">
@@ -259,7 +262,7 @@
       <textarea id="blockHtml" rows="8" placeholder="Paste block HTML here (use variable names like {{title}}, {{caption}}, etc.)"></textarea>
 
       <div class="controls-row">
-        <button id="downloadDocxBtn">Download .docx</button>
+<!--        <button id="downloadDocxBtn">Download .docx</button>-->
         <button id="downloadCssJsBtn" class="ghost">Download CSS & JS</button>
         <button id="previewBtn" class="ghost">Generate Code</button>
       </div>
@@ -317,7 +320,7 @@
         { value: 'Autumn Sale', varName: 'row2_title' },
         { value: 'Up to 50% off', varName: 'row2_caption' },
         { value: '/assets/sale.jpg', varName: 'row2_image' },
-        { value: 'https://youtu.be/dQw4w9WgXcQ', varName: 'row2_video' }
+        { value: 'https://www.youtube.com/watch?v=m8HpZ14NQDk', varName: 'row2_video' }
       ]
     ];
 
@@ -416,7 +419,7 @@
           { value: 'Autumn Sale', varName: 'row2_title' },
           { value: 'Up to 50% off', varName: 'row2_caption' },
           { value: '/assets/sale.jpg', varName: 'row2_image' },
-          { value: 'https://youtu.be/dQw4w9WgXcQ', varName: 'row2_video' }
+          { value: 'https://www.youtube.com/watch?v=m8HpZ14NQDk', varName: 'row2_video' }
         ]
       ];
 
@@ -506,8 +509,8 @@
           rows?.[${r}]?.children?.[${c}]?querySelector('picture img') ||
           rows?.[${r}]?.children?.[${c}]?.querySelector('img');
 
-        const ${varName}_SRC = ${varName}?.getAttribute('src') || "";
-        const ${varName}_ALT = ${varName}?.getAttribute('alt') || "";
+        const ${varName}_src = ${varName}?.getAttribute('src') || "";
+        const ${varName}_alt = ${varName}?.getAttribute('alt') || "";
       `;
           } else {
             varDeclarations += `
@@ -569,80 +572,80 @@
     }
 
     // Download DOCX (Google Docs compatible) - ONLY VALUES, NO VARIABLE NAMES
-    document.getElementById('downloadDocxBtn').addEventListener('click', async () => {
-      const blockName = blockNameInp.value.trim() || 'block';
-
-      status.textContent = 'Generating DOCX...';
-
-      // Build table with ONLY values (ignore variable names)
-      const rows = tableData.map(row => row.map(cell => cell.value));
-
-      // Header row: full width, showing block name
-      const headerRow = `
-      <w:tr>
-        <w:tc>
-          <w:tcPr>
-            <w:gridSpan w:val="${cols}"/>
-            <w:tcW w:w="9500" w:type="dxa"/>
-          </w:tcPr>
-          <w:p><w:r><w:t>${blockName}</w:t></w:r></w:p>
-        </w:tc>
-      </w:tr>`;
-
-
-      const tableRows = rows.map(row => {
-        const cells = row.map(cellText => {
-          const escaped = String(cellText).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          return `<w:tc><w:tcPr><w:tcW w:w="2500" w:type="dxa"/></w:tcPr><w:p><w:r><w:t>${escaped}</w:t></w:r></w:p></w:tc>`;
-        }).join('');
-        return `<w:tr>${cells}</w:tr>`;
-      }).join('');
-
-      const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-  <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-    <w:body>
-      <w:tbl>
-        <w:tblPr>
-          <w:tblW w:w="9500" w:type="dxa"/>
-          <w:tblBorders>
-            <w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-            <w:left w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-            <w:bottom w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-            <w:right w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-            <w:insideH w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-            <w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-          </w:tblBorders>
-        </w:tblPr>
-        ${headerRow}
-        ${tableRows}
-      </w:tbl>
-      <w:sectPr><w:pgSz w:w="12240" w:h="15840"/></w:sectPr>
-    </w:body>
-  </w:document>`;
-
-      const zip = new JSZip();
-
-      zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-  <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-    <Default Extension="xml" ContentType="application/xml"/>
-    <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-  </Types>`);
-
-      zip.folder('_rels').file('.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-  <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
-  </Relationships>`);
-
-      zip.folder('word').file('document.xml', documentXml);
-
-      zip.folder('word').folder('_rels').file('document.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-  <Relationships xmlns="http://schemas.openxmlformats.org/officeDocument/2006/relationships"></Relationships>`);
-
-      const content = await zip.generateAsync({ type: 'blob' });
-      saveAs(content, `${blockName}.docx`);
-      status.textContent = `Downloaded ${blockName}.docx (only values, no variable names)`;
-    });
+//    document.getElementById('downloadDocxBtn').addEventListener('click', async () => {
+//      const blockName = blockNameInp.value.trim() || 'block';
+//
+//      status.textContent = 'Generating DOCX...';
+//
+//      // Build table with ONLY values (ignore variable names)
+//      const rows = tableData.map(row => row.map(cell => cell.value));
+//
+//      // Header row: full width, showing block name
+//      const headerRow = `
+//      <w:tr>
+//        <w:tc>
+//          <w:tcPr>
+//            <w:gridSpan w:val="${cols}"/>
+//            <w:tcW w:w="9500" w:type="dxa"/>
+//          </w:tcPr>
+//          <w:p><w:r><w:t>${blockName}</w:t></w:r></w:p>
+//        </w:tc>
+//      </w:tr>`;
+//
+//
+//      const tableRows = rows.map(row => {
+//        const cells = row.map(cellText => {
+//          const escaped = String(cellText).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+//          return `<w:tc><w:tcPr><w:tcW w:w="2500" w:type="dxa"/></w:tcPr><w:p><w:r><w:t>${escaped}</w:t></w:r></w:p></w:tc>`;
+//        }).join('');
+//        return `<w:tr>${cells}</w:tr>`;
+//      }).join('');
+//
+//      const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+//  <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+//    <w:body>
+//      <w:tbl>
+//        <w:tblPr>
+//          <w:tblW w:w="9500" w:type="dxa"/>
+//          <w:tblBorders>
+//            <w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+//            <w:left w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+//            <w:bottom w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+//            <w:right w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+//            <w:insideH w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+//            <w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+//          </w:tblBorders>
+//        </w:tblPr>
+//        ${headerRow}
+//        ${tableRows}
+//      </w:tbl>
+//      <w:sectPr><w:pgSz w:w="12240" w:h="15840"/></w:sectPr>
+//    </w:body>
+//  </w:document>`;
+//
+//      const zip = new JSZip();
+//
+//      zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+//  <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+//    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+//    <Default Extension="xml" ContentType="application/xml"/>
+//    <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+//  </Types>`);
+//
+//      zip.folder('_rels').file('.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+//  <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+//    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+//  </Relationships>`);
+//
+//      zip.folder('word').file('document.xml', documentXml);
+//
+//      zip.folder('word').folder('_rels').file('document.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+//  <Relationships xmlns="http://schemas.openxmlformats.org/officeDocument/2006/relationships"></Relationships>`);
+//
+//      const content = await zip.generateAsync({ type: 'blob' });
+//      saveAs(content, `${blockName}.docx`);
+//      status.textContent = `Downloaded ${blockName}.docx (only values, no variable names)`;
+//    });
 
     // Download CSS & JS
     document.getElementById('downloadCssJsBtn').addEventListener('click', async () => {
